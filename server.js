@@ -5,6 +5,7 @@ const { instagramGetUrl } = require('instagram-url-direct');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,13 +14,15 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-app.use('/downloads', express.static('downloads'));
 
-// Create downloads directory if it doesn't exist
-const downloadsDir = path.join(__dirname, 'downloads');
+// Use /tmp directory for downloads
+const downloadsDir = path.join(os.tmpdir(), 'social-media-downloader');
 if (!fs.existsSync(downloadsDir)) {
-    fs.mkdirSync(downloadsDir);
+    fs.mkdirSync(downloadsDir, { recursive: true });
 }
+
+// Serve files from /tmp directory
+app.use('/downloads', express.static(downloadsDir));
 
 // Store file deletion timers
 const fileTimers = new Map();
@@ -160,4 +163,5 @@ process.on('SIGINT', () => {
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    console.log(`Temporary files will be stored in: ${downloadsDir}`);
 }); 
